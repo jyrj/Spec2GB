@@ -29,6 +29,7 @@ See `CONTRIBUTING.md` (coming soon) for coding style, branching and commit rules
 ```bash
 # clone
 git clone https://github.com/jyrj/spec2gb
+cd spec2gb
 # install deps
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
