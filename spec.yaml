@@ -1,0 +1,9 @@
+# Tiny stub spec used only to prove the plumbing works.
+name: GameBoy
+version: 0.0.1
+components:
+  - name: ALU
+    ops:
+      - op: add
+        inputs: [a, b]
+        output: sum

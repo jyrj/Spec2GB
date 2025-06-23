@@ -1,0 +1,13 @@
+[project]
+name = "spec2gb"
+version = "0.0.1"
+description = "Spec→GameBoy auto‑generator"
+requires-python = ">=3.10"
+dependencies = ["pyyaml"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
