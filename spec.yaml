@@ -1,9 +1,26 @@
-# Tiny stub spec used only to prove the plumbing works.
+# spec.yaml  – Starter v0.1
+
 name: GameBoy
-version: 0.0.1
-components:
-  - name: ALU
-    ops:
-      - op: add
-        inputs: [a, b]
-        output: sum
+version: 0.1
+description: |
+  Minimal spec used for the first two weeks of the internship.
+  Covers CPU registers, two ALU ops, and a tiny RAM so that
+  prompts can produce runnable code quickly.
+
+cpu:
+  registers:
+    A:   { bits: 8,  role: "Accumulator" }
+    F:   { bits: 8,  role: "Flags (Z,N,H,C)" }
+    PC:  { bits: 16, role: "Program Counter" }
+  flags:
+    Z: { bit: 7, description: "Zero" }
+    N: { bit: 6, description: "Add/Sub" }
+    H: { bit: 5, description: "Half-carry" }
+    C: { bit: 4, description: "Carry" }
+  alu_ops:
+    - { mnemonic: ADD_A_n8, operands: ["imm8"],   effect: "A ← A + imm8" }
+    - { mnemonic: SUB_A_n8, operands: ["imm8"],   effect: "A ← A – imm8" }
+
+memory:
+  ram:
+    size_bytes: 256     # tiny stub for Week-1 testing

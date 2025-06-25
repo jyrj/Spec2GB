@@ -1,9 +1,15 @@
 # Spec2GB
 
-**Spec2GB** is a teaching-oriented research prototype that shows how an LLM‑powered *spec‑to‑code* agent can synthesize a cycle‑accurate Python model of the Nintendo ® Game Boy, and then co‑simulate that model against a *known‑good* open‑source emulator (mGBA).
+**Spec2GB** is a teaching-oriented research prototype that shows how an LLM‑powered *spec‑to‑code* agent can synthesize a Python model of the Nintendo ® Game Boy, and then co‑simulate that model against a *known‑good* open‑source emulator (mGBA).
 
-> **Status:** Scaffold only – everything inside `generated/` is produced automatically by the generator.  
-> **Goal for interns:** iterate on the `spec.yaml` and the prompt templates so that `generator/` can create an ever more complete Game Boy model.
+The long–term vision is to co-simulate selective components against a trusted
+reference emulator (mGBA), but we’ll start with quick checks using **PyBoy**.
+
+
+> **Status:** Bare-bones scaffold.  
+> **Intern Goal (summer 2025):** grow `spec.yaml`, refine prompt templates, and
+> keep committing the LLM-generated code under `generated/`.
+
 
 ---
 
@@ -11,13 +17,16 @@
 
 ```
 Spec2GB/
-├── generator/          # Agent harness & prompt templates
-│   └── generate.py     # stub that 'builds' a dummy module from spec
-├── generated/          # ⚠️ auto‑generated – do not edit by hand
-├── cosim/              # hooks for driving mGBA & comparing traces
-├── spec.yaml           # machine‑readable architectural spec (tiny stub)
-├── tests/              # pytest suite that proves the pipeline works
-└── .github/workflows/  # CI (runs tests on every push)
+├── prompts/           # example prompt templates (LLM copy-&-paste)
+├── generator/         # helper script that writes generated/ stubs
+│   └── generate.py    # placeholder generator
+├── generated/         # ⚠️ LLM-created code – never hand-edit
+├── cosim/             # glue to run PyBoy / mGBA comparisons
+├── spec.yaml          # single source of truth for the architecture
+├── tests/             # pytest suites
+└── .github/
+    └── workflows/     # CI: lint + tests on every push
+
 ```
 
 See `CONTRIBUTING.md` (coming soon) for coding style, branching and commit rules.
@@ -44,13 +53,6 @@ pytest -q
 On every push, GitHub Actions executes the same steps to keep `main` green.
 
 ---
-
-### How does the “generation” work?
-
-For now, **it doesn’t** – `generator/generate.py` pretends to read `spec.yaml` and just creates a trivial `add()` function. You’ll replace that with real OpenAI / Ollama / Llama.cpp calls later. The important bit is:
-
-* **Never** touch files under `generated/` by hand.  
-* Tests import from `generated.*`; if they fail, your agent broke the contract.
 
 Happy hacking!
 
