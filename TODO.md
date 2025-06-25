@@ -4,20 +4,23 @@
 
 # Roadmap
 
-| Week | Mentee | Focus | Concrete Deliverables |
-|------|--------|-------|-----------------------|
-| **1** | **A** (Spec Owner) | ⚙️  **Spec Evolution** <br>• Expand `spec.yaml` with four more ALU ops (AND, OR, XOR, INC) and 4 kB RAM.<br>• Add YAML comments that clarify each field. | PR: updated `spec.yaml` + short `docs/spec_notes.md`. |
-|      | **B** (Prompt Engineer) | 📝 **Prompt Templates & Gen** <br>• Create `prompts/cpu_template.md` that converts *current* spec into a Python `CPU` class.<br>• Use ChatGPT (or another LLM) to generate code, paste into `generated/cpu.py`.<br>• Add/update `tests/test_cpu_smoke.py` that instantiates the class and calls `add()` / `sub()`. | PR: prompt + generated code + passing tests. |
-|      | **C** (Harness Builder) | 🕹️ **PyBoy Integration** <br>• `cosim/pyboy_harness.py` that loads *Tetris.gb* ROM, steps 50 instructions, returns `A`, `F`, `PC`.<br>• Example script `examples/run_pyboy.py` prints those values. | PR: harness + example (no dependency on B’s code yet). |
-| **2** | **A** | Extend spec with basic PPU registers (`LCDC`, `STAT`, `LY`) and Joypad block. | PR: `spec.yaml` v0.2 + changelog in `docs/`. |
-|      | **B** | Update prompt/template to new spec, regenerate `generated/*.py`, keep tests green. | PR: regenerated code + extended tests. |
-|      | **C** | Write `tests/test_alu_vs_pyboy.py`:<br>1. Executes one ADD and one SUB via PyBoy harness.<br>2. Executes same ops on `generated.cpu.CPU`.<br>3. Asserts register match. | PR: new test (CI passes). |
-
-### Daily cadence
-
-* Only the README and spec may change in ways that affect others; keep them small and well-commented.
+| Week | Mentee | Area owned | Goals & Deliverables |
+|------|--------|-----------|----------------------|
+| **1** | **A** | `cpu` spec + prompt | • Expand `cpu.alu_ops` to include AND, OR, XOR, INC.<br>• Fill `prompts/cpu_template.md` so it emits a Python `CPU` class with `reset()` and `step()` (ADD & SUB only).<br>• Run template through ChatGPT, paste result into `generated/cpu.py`.<br>• Add `tests/test_cpu_smoke.py` that instantiates `CPU` and calls `add()` / `sub()`. |
+|      | **B** | `memory` spec + prompt | • Flesh out `memory.regions` to cover ROM, VRAM, WRAM, OAM (addresses & sizes only).<br>• Write `prompts/memory_template.md` that yields a simple `Memory` class supporting `read(addr)` / `write(addr,val)` with bounds checking.<br>• Generate code → `generated/memory.py`.<br>• Add `tests/test_mem_bounds.py` (write outside region raises `ValueError`). |
+|      | **C** | `ppu` spec + prompt | • Add 5 more PPU registers (`STAT`,`SCY`,`SCX`,`WY`,`WX`).<br>• Create `prompts/ppu_template.md` that outputs a skeletal `PPU` class storing those registers.<br>• Generate code → `generated/ppu.py`.<br>• Add `tests/test_ppu_regs.py` that writes & reads each register. |
+| **2** | **A** | Prompt iteration | • Update `cpu_template.md` to generate all 6 ALU ops.<br>• Regenerate `cpu.py`, extend tests to cover new ops. |
+|      | **B** | PyBoy harness | • Build `cosim/pyboy_harness.py` that steps a ROM 50 instructions and returns (A, F, PC).<br>• Example script in `examples/run_pyboy.py`. |
+|      | **C** | Integration tests | • Write `tests/test_cpu_vs_pyboy.py`: run one ADD via PyBoy harness; run same ADD on our `CPU`; assert A & flags match. |
 
 
+At the end of Week 2 we will have:
+
+* Expanded YAML spec with **clearly separated sections**.  
+* Three prompt templates and generated Python modules.  
+* Basic unit tests plus the first PyBoy comparison harness.
+
+Cosimulation with mGBA can then be Phase 3 once the Python model grows.
 
 ---
 

@@ -2,25 +2,24 @@
 
 name: GameBoy
 version: 0.1
-description: |
-  Minimal spec used for the first two weeks of the internship.
-  Covers CPU registers, two ALU ops, and a tiny RAM so that
-  prompts can produce runnable code quickly.
 
 cpu:
+  description: "8-bit Sharp LR35902 core (Intel 8080 + Z80 hybrid)"
   registers:
     A:   { bits: 8,  role: "Accumulator" }
-    F:   { bits: 8,  role: "Flags (Z,N,H,C)" }
+    F:   { bits: 8,  role: "Flag register (Z N H C)" }
     PC:  { bits: 16, role: "Program Counter" }
-  flags:
-    Z: { bit: 7, description: "Zero" }
-    N: { bit: 6, description: "Add/Sub" }
-    H: { bit: 5, description: "Half-carry" }
-    C: { bit: 4, description: "Carry" }
-  alu_ops:
-    - { mnemonic: ADD_A_n8, operands: ["imm8"],   effect: "A ← A + imm8" }
-    - { mnemonic: SUB_A_n8, operands: ["imm8"],   effect: "A ← A – imm8" }
+  alu_ops:        # ✨ Mentee A will grow this list
+    - { mnemonic: ADD_A_n8, operands: ["imm8"], effect: "A ← A + imm8" }
+    - { mnemonic: SUB_A_n8, operands: ["imm8"], effect: "A ← A – imm8" }
 
 memory:
-  ram:
-    size_bytes: 256     # tiny stub for Week-1 testing
+  description: "Address map stub – grow section by section"
+  regions:       # ✨ Mentee B will flesh this out
+    - { name: WRAM, base: 0xC000, size: 0x2000, readable: true, writable: true }
+
+ppu:
+  description: "LCD controller registers only for now"
+  registers:     # ✨ Mentee C will expand here
+    LY:   { addr: 0xFF44, bits: 8, role: "Current scanline" }
+    LCDC: { addr: 0xFF40, bits: 8, role: "LCD control" }

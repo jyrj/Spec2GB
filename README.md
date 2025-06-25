@@ -17,16 +17,15 @@ reference emulator (mGBA), but we’ll start with quick checks using **PyBoy**.
 
 ```
 Spec2GB/
-├── prompts/           # example prompt templates (LLM copy-&-paste)
-├── generator/         # helper script that writes generated/ stubs
-│   └── generate.py    # placeholder generator
-├── generated/         # ⚠️ LLM-created code – never hand-edit
-├── cosim/             # glue to run PyBoy / mGBA comparisons
-├── spec.yaml          # single source of truth for the architecture
-├── tests/             # pytest suites
+├── prompts/            # prompt templates for each component
+├── generator/          # helper script that writes stubs to generated/
+│   └── generate.py
+├── generated/          # ⚠️ LLM-created code – never hand-edit
+├── cosim/              # later: PyBoy / mGBA comparison glue
+├── spec.yaml           # single source of truth
+├── tests/              # pytest suites (start tiny)
 └── .github/
-    └── workflows/     # CI: lint + tests on every push
-
+    └── workflows/      # CI: lint + tests
 ```
 
 See `CONTRIBUTING.md` (coming soon) for coding style, branching and commit rules.
