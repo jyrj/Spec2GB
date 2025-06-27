@@ -23,3 +23,8 @@ ppu:
   registers:     # ✨ Mentee C will expand here
     LY:   { addr: 0xFF44, bits: 8, role: "Current scanline" }
     LCDC: { addr: 0xFF40, bits: 8, role: "LCD control" }
+    STAT: { addr: 0xFF41, bits: 8, role: "LCD status flags & mode" }
+    SCY:  { addr: 0xFF42, bits: 8, role: "BG viewport Y scroll" }
+    SCX:  { addr: 0xFF43, bits: 8, role: "BG viewport X scroll" }
+    WY:   { addr: 0xFF4A, bits: 8, role: "Window Y position" }
+    WX:   { addr: 0xFF4B, bits: 8, role: "Window X position plus 7" }
