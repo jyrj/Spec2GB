@@ -22,7 +22,7 @@
  # Step 3: Implement
  Output ONE python file only
  1. Define "Register8" which includes read and write
- 2. Define a class called PPU with one "Register8" for every register and also read/write, raising ValueError on unknown regions
+ 2. Define a class called PPU with one "Register8" for every register and also read/write, raising ValueError on unknown regions. LY (0xFF44) must be read-only — writing to it should do nothing.
  3. insert "# TODO" comments for timing or interrupt logic
  4. must be less than or equal to 120 words
 
