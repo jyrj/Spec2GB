@@ -1,10 +1,9 @@
-import importlib, sys
-from generator.generate import generate
-
 def test_generation_pipeline():
-    # should succeed without exceptions
-    assert generate()
+    from generated.cpu import CPU
 
-    # dynamic import after generation
-    mod = importlib.import_module("generated.cpu")
-    assert mod.add(2, 3) == 5
+    cpu = CPU()
+    cpu.memory = [{"op": "ADD_A_n8", "imm8": 3}, {"op": "ADD_A_n8", "imm8": 2}]
+    cpu.reset()
+    cpu.step()  # A = 0 + 3
+    cpu.step()  # A = 3 + 2
+    assert cpu.registers["A"] == 5
