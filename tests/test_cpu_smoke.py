@@ -1,3 +1,19 @@
+from generated.cpu import CPU  # Adjust this if CPU is in a different location
+
+def test_addition_and_subtraction():
+    cpu = CPU()
+    cpu.reset()
+    
+    cpu.memory = [
+        {"op": "ADD_A_n8", "imm8": 3},  # A = 0 + 3 = 3
+        {"op": "ADD_A_n8", "imm8": 2},  # A = 3 + 2 = 5
+    ]
+
+    cpu.step()
+    cpu.step()
+
+    assert cpu.registers["A"] == 5, f"Expected A to be 5, got {cpu.registers['A']}"
+
 class CPU:
     def __init__(self):
         self.reset()
