@@ -12,7 +12,10 @@ cpu:
   alu_ops:        # ✨ Mentee A will grow this list
     - { mnemonic: ADD_A_n8, operands: ["imm8"], effect: "A ← A + imm8" }
     - { mnemonic: SUB_A_n8, operands: ["imm8"], effect: "A ← A – imm8" }
-
+    - { mnemonic: AND_A_n8, operands: ["imm8"], effect: "A ← A & imm8" }
+    - { mnemonic: OR_A_n8,  operands: ["imm8"], effect: "A ← A | imm8" }
+    - { mnemonic: XOR_A_n8, operands: ["imm8"], effect: "A ← A ^ imm8" }
+    - { mnemonic: INC_A,    operands: [],       effect: "A ← A + 1" }
 memory:
   description: "Address map stub – grow section by section"
   regions:       # ✨ Mentee B will flesh this out
