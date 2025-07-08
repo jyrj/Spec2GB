@@ -16,6 +16,12 @@ cpu:
     - { mnemonic: OR_A_n8,  operands: ["imm8"], effect: "A ← A | imm8" }
     - { mnemonic: XOR_A_n8, operands: ["imm8"], effect: "A ← A ^ imm8" }
     - { mnemonic: INC_A,    operands: [],       effect: "A ← A + 1" }
+  
+  control_ops:
+    - { mnemonic: JP_a16,   operands: ["addr"],  effect: "PC ← addr" }
+    - { mnemonic: JR_r8,    operands: ["rel8"],  effect: "PC ← PC + rel8" }
+    - { mnemonic: CALL_a16, operands: ["addr"],  effect: "push(PC); PC ← addr" }
+    - { mnemonic: RET,      operands: [],        effect: "PC ← pop()" }
 memory:
   description: "Address map stub – grow section by section"
   regions:       # ✨ Mentee B will flesh this out
