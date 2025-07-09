@@ -1,0 +1,37 @@
+# memory.regions
+regions:
+  - name: ROM0
+    start: 0x0000
+    end: 0x3FFF
+    size: 16384
+    banked: false
+
+  - name: ROMX
+    start: 0x4000
+    end: 0x7FFF
+    size: 16384
+    banked: true
+
+  - name: VRAM
+    start: 0x8000
+    end: 0x9FFF
+    size: 8192
+    banked: true
+
+  - name: WRAM0
+    start: 0xC000
+    end: 0xCFFF
+    size: 4096
+    banked: false
+
+  - name: WRAMX
+    start: 0xD000
+    end: 0xDFFF
+    size: 4096
+    banked: true
+
+  - name: OAM
+    start: 0xFE00
+    end: 0xFE9F
+    size: 160
+    banked: false
