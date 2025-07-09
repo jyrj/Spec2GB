@@ -31,7 +31,12 @@ cpu:
 memory:
   description: "Address map stub – grow section by section"
   regions:       # ✨ Mentee B will flesh this out
-    - { name: WRAM, base: 0xC000, size: 0x2000, readable: true, writable: true }
+    - { name: ROM0,  base: 0x0000, size: 0x4000, readable: true, writable: false }
+    - { name: ROMX,  base: 0x4000, size: 0x4000, readable: true, writable: false }
+    - { name: VRAM,  base: 0x8000, size: 0x2000, readable: true, writable: true  }
+    - { name: WRAM0, base: 0xC000, size: 0x1000, readable: true, writable: true  }
+    - { name: WRAMX, base: 0xD000, size: 0x1000, readable: true, writable: true  }
+    - { name: OAM,   base: 0xFE00, size: 0x00A0, readable: true, writable: true  }
 
 ppu:
   description: "LCD controller registers only for now"
