@@ -87,6 +87,9 @@ def decode_rom(rom: bytes):
 def test_cpu_vs_pyboy():
     # build ROM & temp-file
     rom = build_rom()
+    with open("build/test_rom.gb", "wb") as f:
+        f.write(rom)
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".gb") as tmp:
         tmp.write(rom)
         tmp.flush()
