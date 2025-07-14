@@ -98,7 +98,7 @@ def parse_rom_to_instructions(rom):
             break
     return out
 
-def spec_test_cpu_vs_pyboy():
+def test_cpu_vs_pyboy():
     rom = build_rom()
     with tempfile.NamedTemporaryFile(delete=False, suffix=".gb") as tmp:
         rom_path = tmp.name
