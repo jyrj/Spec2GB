@@ -37,6 +37,10 @@ joypad:
       bits: 8
       role: "Joypad input: button selection and state (active low)"
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> c5fc739 (Joypad regs)
 memory:
   description: "Address map stub – grow section by section"
   regions:       # ✨ Mentee B will flesh this out
