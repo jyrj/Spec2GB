@@ -7,6 +7,7 @@ class MemoryRegion(Enum):
     WRAM0 = (0xC000, 0xCFFF, False)
     WRAMX = (0xD000, 0xDFFF, True)
     OAM = (0xFE00, 0xFE9F, False)
+    HRAM = (0xFF80, 0xFFFE, False)
 
     def contains(self, addr):
         return self.value[0] <= addr <= self.value[1]
