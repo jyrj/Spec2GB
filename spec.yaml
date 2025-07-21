@@ -28,6 +28,16 @@ cpu:
     - { mnemonic: JR_r8,    operands: ["rel8"],  effect: "PC ← PC + rel8" }
     - { mnemonic: CALL_a16, operands: ["addr"],  effect: "push(PC); PC ← addr" }
     - { mnemonic: RET,      operands: [],        effect: "PC ← pop()" }
+
+joypad:
+  description: "Joypad input register interface"
+  registers:
+    P1:
+      addr: 0xFF00
+      bits: 8
+      role: "Joypad input: button selection and state (active low)"
+
+
 memory:
   description: "Address map stub – grow section by section"
   regions:       # ✨ Mentee B will flesh this out
