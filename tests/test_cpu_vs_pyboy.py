@@ -23,38 +23,43 @@ def _global_checksum(buf: bytearray) -> int:
 
 # ── ROM builder ────────────────────────────────────────────────────────────
 def build_rom() -> bytes:
-    rom = bytearray(0x8000)                       # 32 KiB
+    from pathlib import Path
 
-    # header
-    rom[0x0000:0x0003] = b"\xC3\x50\x01"
-    rom[0x0100:0x0103] = b"\xC3\x50\x01"
-    rom[0x0104:0x0134] = NINTENDO_LOGO
-    rom[0x0134:0x0144] = b"MINICPU\x00\x00\x00\x00\x00\x00\x00\x00"
-    rom[0x0144:0x0146] = b"\x30\x30"
-    rom[0x0146] = 0x80
-    rom[0x0147] = 0x00
-    rom[0x0148] = 0x00
-    rom[0x0149] = 0x00
-    rom[0x014A] = 0x00
-    rom[0x014B] = 0x33
-    rom[0x014C] = 0x00
-    rom[0x014D] = _hdr_checksum(rom)
+    Path("build").mkdir(exist_ok=True)
+    with open("build/test_rom.gb", "wb") as f:
+    
+        rom = bytearray(0x8000)                       # 32 KiB
 
-    # code at 0x0150
-    rom[0x0150:0x0159] = bytes([
-        0x3E, 0x12,       # LD  A,12
-        0xE0, 0x10,       # LDH (10),A
-        0xD6, 0x12,       # SUB A,12
-        0xF0, 0x10,       # LDH A,(10)
-        0x76              # HALT
-    ])
+        # header
+        rom[0x0000:0x0003] = b"\xC3\x50\x01"
+        rom[0x0100:0x0103] = b"\xC3\x50\x01"
+        rom[0x0104:0x0134] = NINTENDO_LOGO
+        rom[0x0134:0x0144] = b"MINICPU\x00\x00\x00\x00\x00\x00\x00\x00"
+        rom[0x0144:0x0146] = b"\x30\x30"
+        rom[0x0146] = 0x80
+        rom[0x0147] = 0x00
+        rom[0x0148] = 0x00
+        rom[0x0149] = 0x00
+        rom[0x014A] = 0x00
+        rom[0x014B] = 0x33
+        rom[0x014C] = 0x00
+        rom[0x014D] = _hdr_checksum(rom)
 
-    # pad to 16 KiB
-    if len(rom) % 0x4000:
-        rom.extend(b"\x00" * (0x4000 - len(rom) % 0x4000))
+        # code at 0x0150
+        rom[0x0150:0x0159] = bytes([
+            0x3E, 0x12,       # LD  A,12
+            0xE0, 0x10,       # LDH (10),A
+            0xD6, 0x12,       # SUB A,12
+            0xF0, 0x10,       # LDH A,(10)
+            0x76              # HALT
+        ])
 
-    rom[0x14E:0x150] = struct.pack(">H", _global_checksum(rom))
-    return bytes(rom)
+        # pad to 16 KiB
+        if len(rom) % 0x4000:
+            rom.extend(b"\x00" * (0x4000 - len(rom) % 0x4000))
+
+        rom[0x14E:0x150] = struct.pack(">H", _global_checksum(rom))
+        return bytes(rom)
 
 # ── helper to expose registers uniformly ───────────────────────────────────
 def pyboy_regs(pb: PyBoy):
