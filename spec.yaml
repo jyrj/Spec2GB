@@ -36,7 +36,7 @@ joypad:
       addr: 0xFF00
       bits: 8
       role: "Joypad input: button selection and state (active low)"
- 
+
 memory:
   description: "Address map stub – grow section by section"
   regions:       # ✨ Mentee B will flesh this out
@@ -46,6 +46,7 @@ memory:
     - { name: WRAM0, base: 0xC000, size: 0x1000, readable: true, writable: true  }
     - { name: WRAMX, base: 0xD000, size: 0x1000, readable: true, writable: true  }
     - { name: OAM,   base: 0xFE00, size: 0x00A0, readable: true, writable: true  }
+    - { name: HRAM,  base: 0xFF80, size: 0x007F, readable: true, writable: true  }
 
 ppu:
   description: "LCD controller registers only for now"
