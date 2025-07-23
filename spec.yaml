@@ -36,11 +36,15 @@ joypad:
       addr: 0xFF00
       bits: 8
       role: "Joypad input: button selection and state (active low)"
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 =======
 
 >>>>>>> c5fc739 (Joypad regs)
+=======
+ 
+>>>>>>> 91e8c0f (APU stub & polish)
 memory:
   description: "Address map stub – grow section by section"
   regions:       # ✨ Mentee B will flesh this out
