@@ -37,7 +37,6 @@ joypad:
       bits: 8
       role: "Joypad input: button selection and state (active low)"
 
-
 memory:
   description: "Address map stub – grow section by section"
   regions:       # ✨ Mentee B will flesh this out
@@ -59,3 +58,18 @@ ppu:
     SCX:  { addr: 0xFF43, bits: 8, role: "BG viewport X scroll" }
     WY:   { addr: 0xFF4A, bits: 8, role: "Window Y position" }
     WX:   { addr: 0xFF4B, bits: 8, role: "Window X position plus 7" }
+
+apu:
+  description: "Audio Processing Unit – stub (no sound logic)"
+  registers:
+    NR10: { addr: 0xFF10, bits: 8, role: "CH1 sweep" }
+    NR11: { addr: 0xFF11, bits: 8, role: "CH1 length/duty" }
+    NR12: { addr: 0xFF12, bits: 8, role: "CH1 envelope" }
+    NR13: { addr: 0xFF13, bits: 8, role: "CH1 frequency lo" }
+    NR14: { addr: 0xFF14, bits: 8, role: "CH1 frequency hi" }
+    NR52: { addr: 0xFF26, bits: 8, role: "Sound on/off" }
+    WAVE_RAM:
+      addr: 0xFF30
+      size: 16
+      bits: 8
+      role: "Waveform RAM (Channel 3)"
