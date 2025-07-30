@@ -1,3 +1,8 @@
+Output a single Python file. Code only. No explanations. No ellipses. No truncation.
+Include TODO comments for unimplemented parts.
+Do not include markdown or comments about what the code does.
+All code must be importable and self-contained.
+
 # APU Template
 
 Implement a Python class `APU` that contains audio control registers used by the Game Boy hardware. This is a stub implementation: actual audio behavior is not required.
