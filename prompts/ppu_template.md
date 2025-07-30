@@ -1,5 +1,9 @@
- <!-- TODO -->
- You are a senior Gameboy emulator engineer, please write concise Python 3.13.5 code.
+Output a single Python file. Code only. No explanations. No ellipses. No truncation.
+Include TODO comments for unimplemented parts.
+Do not include markdown or comments about what the code does.
+All code must be importable and self-contained.
+
+You are a senior Gameboy emulator engineer, please write concise Python 3.13.5 code.
 
  Here is the current PPU register from spec.yaml:
 
