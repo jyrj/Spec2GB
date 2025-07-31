@@ -29,3 +29,21 @@ Use this table to define the regions:
 | WRAMX  | 0xD000 | 0xDFFF | True   |
 | OAM    | 0xFE00 | 0xFE9F | False  |
 | HRAM   | 0xFF80 | 0xFFFE | False  |
+
+# Step 4: Cartridge ROM and RAM Mapping (MBC0)
+Update the `Memory` class so it accepts a `cartridge` object with:
+
+- `cartridge.rom`: a `bytes` object with 32KB ROM data
+- `cartridge.ram`: an optional `bytearray` for external RAM (usually 8KB)
+
+The Memory class should:
+
+- Map `ROM0` (0x0000–0x3FFF) and `ROMX` (0x4000–0x7FFF) to `cartridge.rom`
+- Map `0xA000–0xBFFF` to `cartridge.ram` if present
+
+Implement `read(addr)` and `write(addr, val)`:
+
+- ROM region reads return data from `cartridge.rom`
+- RAM region reads/writes access `cartridge.ram`
+- Writes to ROM should raise `ValueError`
+- Invalid or unmapped addresses should raise `ValueError`

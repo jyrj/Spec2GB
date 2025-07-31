@@ -40,7 +40,7 @@ joypad:
 
 memory:
   description: "Address map stub – grow section by section"
-  regions:       # ✨ Mentee B will flesh this out
+  regions:
     - { name: ROM0,  base: 0x0000, size: 0x4000, readable: true, writable: false }
     - { name: ROMX,  base: 0x4000, size: 0x4000, readable: true, writable: false }
     - { name: VRAM,  base: 0x8000, size: 0x2000, readable: true, writable: true  }
@@ -49,9 +49,15 @@ memory:
     - { name: OAM,   base: 0xFE00, size: 0x00A0, readable: true, writable: true  }
     - { name: HRAM,  base: 0xFF80, size: 0x007F, readable: true, writable: true  }
 
+    # 🕒 Week 4 – Timer-mapped I/O registers
+    - { name: TIMER_DIV,  base: 0xFF04, size: 1, readable: true, writable: true }
+    - { name: TIMER_TIMA, base: 0xFF05, size: 1, readable: true, writable: true }
+    - { name: TIMER_TMA,  base: 0xFF06, size: 1, readable: true, writable: true }
+    - { name: TIMER_TAC,  base: 0xFF07, size: 1, readable: true, writable: true }
+
 ppu:
   description: "LCD controller registers only for now"
-  registers:     # ✨ Mentee C will expand here
+  registers:
     LY:   { addr: 0xFF44, bits: 8, role: "Current scanline" }
     LCDC: { addr: 0xFF40, bits: 8, role: "LCD control" }
     STAT: { addr: 0xFF41, bits: 8, role: "LCD status flags & mode" }
@@ -59,3 +65,19 @@ ppu:
     SCX:  { addr: 0xFF43, bits: 8, role: "BG viewport X scroll" }
     WY:   { addr: 0xFF4A, bits: 8, role: "Window Y position" }
     WX:   { addr: 0xFF4B, bits: 8, role: "Window X position plus 7" }
+
+memory_cpu_integration:
+  description: |
+    Connect the Memory system to the CPU so that the CPU uses
+    Memory's read(addr) and write(addr, value) methods for all
+    memory access.
+
+  tasks:
+    - Implement a Memory class with read() and write() methods
+      that correctly route reads/writes to memory regions based on address.
+    - Modify the CPU class to accept a Memory instance and
+      call memory.read(addr) and memory.write(addr, value) when accessing memory.
+    - Ensure errors are raised for invalid addresses or illegal writes (e.g., to ROM).
+    - Test integration by running the provided demo file:
+      examples/mem_cpu_interop.py
+
