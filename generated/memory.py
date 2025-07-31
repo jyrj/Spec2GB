@@ -78,3 +78,5 @@ class Memory:
         else:
             print(f"Invalid write attempted at address {hex(addr)}")  # <-- Debug line added
             raise ValueError(f"Write to invalid memory address: {hex(addr)}")
+
+    return "UNKNOWN"

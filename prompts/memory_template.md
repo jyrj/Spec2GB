@@ -1,3 +1,8 @@
+Output a single Python file. Code only. No explanations. No ellipses. No truncation.
+Include TODO comments for unimplemented parts.
+Do not include markdown or comments about what the code does.
+All code must be importable and self-contained.
+
 You're helping with a Game Boy emulator. Please write simple Python 3.13.5 code.
 
 # Step 1: Plan
@@ -29,6 +34,7 @@ Use this table to define the regions:
 | WRAMX  | 0xD000 | 0xDFFF | True   |
 | OAM    | 0xFE00 | 0xFE9F | False  |
 | HRAM   | 0xFF80 | 0xFFFE | False  |
+
 
 # Step 4: Cartridge ROM and RAM Mapping (MBC0)
 Update the `Memory` class so it accepts a `cartridge` object with:
