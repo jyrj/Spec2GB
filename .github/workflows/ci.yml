@@ -21,7 +21,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pyyaml
+          pip install pyyaml   # keep anything extra you need
 
-      - name: Run tests
-        run: pytest -q
+      - name: Run tests & compare CPU traces
+        run: |
+          pytest -q            # your existing tests
+          python -m cosim.run_vs_pyboy   # produces mismatch_log.csv
+
+      # ――― NEW: upload the CSV (even if it’s empty except header) ―――
+      - name: Upload mismatch log
+        uses: actions/upload-artifact@v4
+        with:
+          name: mismatch_log
+          path: mismatch_log.csv
