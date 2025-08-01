@@ -1,3 +1,8 @@
+Output a single Python file. Code only. No explanations. No ellipses. No truncation.
+Include TODO comments for unimplemented parts.
+Do not include markdown or comments about what the code does.
+All code must be importable and self-contained.
+
 You're helping with a Game Boy emulator. Please write simple Python 3.13.5 code.
 
 # Step 1: Plan

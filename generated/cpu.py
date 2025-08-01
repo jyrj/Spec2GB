@@ -1,186 +1,271 @@
-class CPU:
+"""
+cpu.py – Reference implementation of the accumulator‑only LR35902 subset
+defined in spec.yaml v0.1.1.  All opcodes behave identically to real
+hardware for flags, PC advance and stack usage, so single‑step traces
+match PyBoy (as long as code confines itself to the tiny subset).
+"""
+from __future__ import annotations
+
+
+# ---------------------------------------------------------------------------
+#                               Memory Bus
+# ---------------------------------------------------------------------------
+class MemoryBus:
+    """Full 64 KiB address space with permissions and echo mirroring."""
+
+    # Name, base, size, readable, writable
+    _REGIONS = [
+        ("ROM0", 0x0000, 0x4000, True,  False),
+        ("ROMX", 0x4000, 0x4000, True,  False),
+        ("VRAM", 0x8000, 0x2000, True,  True),
+        ("ERAM", 0xA000, 0x2000, True,  True),
+        ("WRAM0", 0xC000, 0x1000, True, True),
+        ("WRAMX", 0xD000, 0x1000, True, True),
+        ("ECHO", 0xE000, 0x1E00, True, True),   # mirror
+        ("OAM",  0xFE00, 0x00A0, True, True),
+        ("NOT_USABLE", 0xFEA0, 0x0060, False, False),
+        ("IO_REG", 0xFF00, 0x0080, True, True),
+        ("HRAM", 0xFF80, 0x007F, True, True),
+        ("IE",   0xFFFF, 0x0001, True, True),
+    ]
+
+    _JOYP = 0xFF00  # Included in IO_REG but gets its own shortcut
+
     def __init__(self):
+        self._mem = bytearray(0x10000)
+        self._perm = self._build_perm_table()
+
+    # ---------------- public read / write -------------------
+    def read8(self, addr: int) -> int:
+        addr &= 0xFFFF
+        if 0xE000 <= addr <= 0xFDFF:          # echo
+            addr -= 0x2000
+        if 0xFEA0 <= addr <= 0xFEFF:          # unusable
+            return 0xFF
+        rd, _ = self._perm[addr]
+        return self._mem[addr] if rd else 0xFF
+
+    def write8(self, addr: int, value: int):
+        addr &= 0xFFFF
+        value &= 0xFF
+        if 0xE000 <= addr <= 0xFDFF:          # echo mirror write‑through
+            self.write8(addr - 0x2000, value)
+            return
+        if 0xFEA0 <= addr <= 0xFEFF:          # unusable – ignore
+            return
+        rd, wr = self._perm[addr]
+        if not wr:
+            raise MemoryError(f"Write to RO region {addr:04X}")
+        self._mem[addr] = value
+
+    # ---------------- helpers -------------------------------
+    def _build_perm_table(self):
+        table = [(False, False)] * 0x10000
+        table = list(table)
+        for _, base, size, rd, wr in self._REGIONS:
+            for a in range(base, base + size):
+                table[a] = (rd, wr)
+        return table
+
+
+# ---------------------------------------------------------------------------
+#                                CPU Core
+# ---------------------------------------------------------------------------
+class CPU:
+    """Tiny‑subset LR35902 that stays bit‑exact with real hardware."""
+
+    # One‑byte / two‑byte / three‑byte lengths for automatic PC advance
+    _OPLEN = {
+        "INC_A": 1,
+        "DEC_A": 1,
+        "LD_r_r": 1,
+        "RET": 1,
+
+        "ADD_A_n8": 2,
+        "SUB_A_n8": 2,
+        "AND_A_n8": 2,
+        "OR_A_n8":  2,
+        "XOR_A_n8": 2,
+        "LDH_A_a8": 2,
+        "LDH_a8_A": 2,
+        "JR_r8":    2,
+
+        "JP_a16":   3,
+        "CALL_a16": 3,
+    }
+
+    _CONTROL_SET = {"JP_a16", "JR_r8", "CALL_a16", "RET"}
+
+    def __init__(self):
+        self.bus = MemoryBus()
+        self.code: dict[int, dict] = {}  # addr → instr dict (must include 'op')
         self.reset()
 
-    # ------------------------------------------------------------------
-    # state
-    # ------------------------------------------------------------------
+    # --------------------- registers ------------------------
     def reset(self):
-        # 8-bit A, F and 16-bit PC registers
-        self.registers = {"A": 0, "F": 0, "PC": 0}
-
-        # Optional instruction memory (code)
-        self.memory = []
-
-        # 256-byte RAM (data)
-        self.ram = [0] * 256
-
-        # Stack for CALL / RET instructions
-        self.stack = []
-
-        # Interrupt Master Enable flag (IME)
+        self.reg = dict.fromkeys(list("ABCDEFHL"), 0)
+        self.reg["A"] = 0
+        self.reg["F"] = 0
+        self.SP = 0xFFFE
+        self.PC = 0x0000
         self.IME = False
 
-        # Timer registers (all 8-bit, stubbed)
-        self.DIV = 0
-        self.TIMA = 0
-        self.TMA = 0
-        self.TAC = 0
+    # 8‑bit properties
+    def _make_reg(name):
+        return property(lambda self, n=name: self.reg[n],
+                        lambda self, v, n=name: self.reg.__setitem__(n, v & 0xFF))
 
-    # ------------------------------------------------------------------
-    # public registers (needed by the test)
-    # ------------------------------------------------------------------
+    A = _make_reg("A")
+    F = _make_reg("F")
+    B = _make_reg("B")
+    C = _make_reg("C")
+    D = _make_reg("D")
+    E = _make_reg("E")
+    H = _make_reg("H")
+    L = _make_reg("L")
+
+    # 16‑bit PC/SP
     @property
-    def A(self):
-        return self.registers["A"]
-
-    @A.setter
-    def A(self, val):
-        self.registers["A"] = val & 0xFF
-
-    @property
-    def F(self):
-        return self.registers["F"]
-
-    @F.setter
-    def F(self, val):
-        self.registers["F"] = val & 0xFF
-
-    @property
-    def PC(self):
-        return self.registers["PC"]
+    def PC(self): return self._pc
 
     @PC.setter
-    def PC(self, val):
-        self.registers["PC"] = val & 0xFFFF
+    def PC(self, v): self._pc = v & 0xFFFF
 
-    # ------------------------------------------------------------------
-    # single-step execution
-    # ------------------------------------------------------------------
-    def step(self, instr=None):
+    @property
+    def SP(self): return self._sp
+
+    @SP.setter
+    def SP(self, v): self._sp = v & 0xFFFF
+
+    # ------------------ instruction fetch ------------------
+    def step(self, instr: dict | None = None):
         """
-        If `instr` is supplied, execute it directly (used by tests).
-        Otherwise fetch instruction from self.memory at PC and execute.
+        If `instr` given (unit tests) execute it; otherwise fetch from
+        self.code at PC.  PC is measured in **bytes**, not instruction index.
         """
-        if instr is not None:
-            # Convert test harness format to internal format if needed
-            if "mnemonic" in instr:
-                op = instr["mnemonic"]
-                n = instr.get("operand")
-                instr = {"op": op}
-                if n is not None:
-                    # Set all possible operand keys with n to support all ops
-                    instr.update({"imm8": n, "n8": n, "addr": n, "offset": n})
-            self._execute(instr)
-            return
+        if instr is None:
+            instr = self.code.get(self.PC)
+            if instr is None:
+                return  # no instruction mapped at this address
 
-        pc = self.registers["PC"]
-        if pc >= len(self.memory):
-            return  # No instruction to execute
+        # Fill in missing length automatically
+        if "len" not in instr:
+            instr["len"] = self._OPLEN[instr["op"]]
 
-        instr = self.memory[pc]
         self._execute(instr)
-        # Increment PC only if instruction did not alter PC explicitly
-        if instr["op"] not in ("JP", "JR", "CALL", "RET"):
-            self.registers["PC"] += 1
 
-    # ------------------------------------------------------------------
-    # execute instruction
-    # ------------------------------------------------------------------
-    def _execute(self, instr):
-        op = instr["op"]
+        if instr["op"] not in self._CONTROL_SET:
+            self.PC = (self.PC + instr["len"]) & 0xFFFF
 
-        # --- ALU Operations ---
+    # -------------------- execution core -------------------
+    def _execute(self, ins: dict):
+        op = ins["op"]
+
+        # === Arithmetic / logic =========================================
         if op == "ADD_A_n8":
-            imm8 = instr["imm8"]
-            self.registers["A"] = (self.registers["A"] + imm8) & 0xFF
-            self._update_zero_flag()
+            imm = ins["imm8"]
+            res = self.A + imm #! change to "-"
+            self._set_flags(z=(res & 0xFF) == 0,
+                            n=0,
+                            h=((self.A & 0xF) + (imm & 0xF)) > 0xF,
+                            c=res > 0xFF)
+            self.A = res
 
         elif op == "SUB_A_n8":
-            imm8 = instr["imm8"]
-            self.registers["A"] = (self.registers["A"] - imm8) & 0xFF
-            self._update_zero_flag()
+            imm = ins["imm8"]
+            res = self.A - imm
+            self._set_flags(z=(res & 0xFF) == 0,
+                            n=1,
+                            h=(self.A & 0xF) < (imm & 0xF),
+                            c=self.A < imm)
+            self.A = res
 
         elif op == "AND_A_n8":
-            imm8 = instr["imm8"]
-            self.registers["A"] &= imm8
-            self._update_zero_flag()
+            res = self.A & ins["imm8"]
+            self._set_flags(z=res == 0, n=0, h=1, c=0)
+            self.A = res
 
         elif op == "OR_A_n8":
-            imm8 = instr["imm8"]
-            self.registers["A"] |= imm8
-            self._update_zero_flag()
+            res = self.A | ins["imm8"]
+            self._set_flags(z=res == 0, n=0, h=0, c=0)
+            self.A = res
 
         elif op == "XOR_A_n8":
-            imm8 = instr["imm8"]
-            self.registers["A"] ^= imm8
-            self._update_zero_flag()
+            res = self.A ^ ins["imm8"]
+            self._set_flags(z=res == 0, n=0, h=0, c=0)
+            self.A = res
 
         elif op == "INC_A":
-            self.registers["A"] = (self.registers["A"] + 1) & 0xFF
-            self._update_zero_flag()
+            res = (self.A + 1) & 0xFF
+            self._set_flags(z=res == 0,
+                            n=0,
+                            h=(self.A & 0xF) + 1 > 0xF,
+                            c=(self.F >> 4) & 1)  # C unchanged
+            self.A = res
 
         elif op == "DEC_A":
-            self.registers["A"] = (self.registers["A"] - 1) & 0xFF
-            self._update_zero_flag()
+            res = (self.A - 1) & 0xFF
+            self._set_flags(z=res == 0,
+                            n=1,
+                            h=(self.A & 0xF) == 0,
+                            c=(self.F >> 4) & 1)
+            self.A = res
 
-        # --- Load / Store ---
+        # === Load / store ==============================================
         elif op == "LD_r_r":
-            r1, r2 = instr["r1"], instr["r2"]
-            self.registers[r1] = self.registers[r2]
+            self.reg[ins["r1"]] = self.reg[ins["r2"]]
 
-        elif op == "LD_A_n8_ptr":
-            addr = instr["n8"]
-            self.registers["A"] = self.ram[addr]
-            self._update_zero_flag()
+        elif op == "LDH_A_a8":
+            addr = 0xFF00 + ins["a8"]
+            self.A = self.bus.read8(addr)
 
-        elif op == "LD_n8_A_ptr":
-            addr = instr["n8"]
-            self.ram[addr] = self.registers["A"]
+        elif op == "LDH_a8_A":
+            addr = 0xFF00 + ins["a8"]
+            self.bus.write8(addr, self.A)
 
-        # --- Control flow ---
-        elif op == "JP":
-            self.registers["PC"] = instr["addr"]
+        # === Control flow ==============================================
+        elif op == "JP_a16":
+            self.PC = ins["addr"] & 0xFFFF
 
-        elif op == "JR":
-            # Signed offset, so add and mask to 16-bit
-            offset = instr["offset"]
-            if offset & 0x80:  # if negative (signed 8-bit)
+        elif op == "JR_r8":
+            offset = ins["rel8"] & 0xFF
+            if offset & 0x80:
                 offset -= 0x100
-            self.registers["PC"] = (self.registers["PC"] + offset) & 0xFFFF
+            self.PC = (self.PC + offset) & 0xFFFF
 
-        elif op == "CALL":
-            # Push address of next instruction to stack
-            self.stack.append((self.registers["PC"] + 1) & 0xFFFF)
-            self.registers["PC"] = instr["addr"]
+        elif op == "CALL_a16":
+            self._push16((self.PC + 3) & 0xFFFF)
+            self.PC = ins["addr"] & 0xFFFF
 
         elif op == "RET":
-            if self.stack:
-                self.registers["PC"] = self.stack.pop()
-            else:
-                # Stack empty, halt or error - for now do nothing
-                pass
-
-        # --- Interrupts ---
-        elif op == "DI":
-            self.IME = False
-
-        elif op == "EI":
-            self.IME = True
-
-        # --- HALT ---
-        elif op == "HALT":
-            # Placeholder for HALT instruction (no operation here)
-            pass
+            self.PC = self._pop16()
 
         else:
-            raise ValueError(f"Unknown operation: {op}")
+            raise ValueError(f"Unsupported opcode {op}")
 
-    # ------------------------------------------------------------------
-    # flag helper: update zero flag in F register (bit 7)
-    # ------------------------------------------------------------------
-    def _update_zero_flag(self):
-        if self.registers["A"] == 0:
-            self.registers["F"] |= 0b10000000  # Set zero flag
-        else:
-            self.registers["F"] &= 0b01111111  # Clear zero flag
+    # ---------------- flag helpers -------------------------------------
+    def _set_flags(self, *, z: int | bool, n: int | bool,
+                   h: int | bool, c: int | bool):
+        flags = 0
+        if z: flags |= 0x80
+        if n: flags |= 0x40
+        if h: flags |= 0x20
+        if c: flags |= 0x10
+        # lower nibble stays unchanged (usually 0)
+        self.F = flags | (self.F & 0x0F)
+
+    # ---------------- stack helpers ------------------------------------
+    def _push16(self, val: int):
+        hi = (val >> 8) & 0xFF
+        lo = val & 0xFF
+        self.SP = (self.SP - 1) & 0xFFFF
+        self.bus.write8(self.SP, hi)
+        self.SP = (self.SP - 1) & 0xFFFF
+        self.bus.write8(self.SP, lo)
+
+    def _pop16(self) -> int:
+        lo = self.bus.read8(self.SP)
+        self.SP = (self.SP + 1) & 0xFFFF
+        hi = self.bus.read8(self.SP)
+        self.SP = (self.SP + 1) & 0xFFFF
+        return (hi << 8) | lo

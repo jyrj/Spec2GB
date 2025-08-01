@@ -1,13 +1,30 @@
 [project]
-name = "spec2gb"
-version = "0.0.1"
-description = "Spec→GameBoy auto‑generator"
+name            = "spec2gb"
+version         = "0.0.1"
+description     = "Spec→GameBoy auto‑generator"
 requires-python = ">=3.10"
-dependencies = ["pyyaml"]
+
+# Runtime dependencies for your library / app
+dependencies = [
+    "pyyaml",
+    "pyboy>=1.4",           # emulator core (wheel ships .pxd headers)
+    "numpy>=1.26",          # PyBoy headers need NumPy C API
+]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = [
+    "pytest",
+    "cython>=3.0",          # handy for editing the .pyx, not needed at runtime
+]
 
+# ------------------------------------------------------------------
+# Build‑time configuration (PEP 517)
+# ------------------------------------------------------------------
 [build-system]
-requires = ["setuptools>=68"]
+requires = [
+    "setuptools",           # any version is fine with setup.py
+    "wheel",
+    "cython>=3.0",          # compile pyboy_bridge.pyx
+    "numpy>=1.26",          # so Cython can find numpy/arrayobject.h
+]
 build-backend = "setuptools.build_meta"
