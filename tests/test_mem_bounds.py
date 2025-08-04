@@ -1,7 +1,6 @@
 import pytest
 from generated.cartridge import Cartridge
-from generated.memory import Memory
-
+from generated.memory import Memory, get_memory_region  # Added get_memory_region import
 
 def make_memory():
     rom = bytearray([0x00] * 0x8000)
