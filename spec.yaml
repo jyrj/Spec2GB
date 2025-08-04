@@ -49,11 +49,13 @@ memory:
     - { name: OAM,   base: 0xFE00, size: 0x00A0, readable: true, writable: true  }
     - { name: HRAM,  base: 0xFF80, size: 0x007F, readable: true, writable: true  }
 
+
     # 🕒 Week 4 – Timer-mapped I/O registers
     - { name: TIMER_DIV,  base: 0xFF04, size: 1, readable: true, writable: true }
     - { name: TIMER_TIMA, base: 0xFF05, size: 1, readable: true, writable: true }
     - { name: TIMER_TMA,  base: 0xFF06, size: 1, readable: true, writable: true }
     - { name: TIMER_TAC,  base: 0xFF07, size: 1, readable: true, writable: true }
+
 
 ppu:
   description: "LCD controller registers only for now"
@@ -81,3 +83,18 @@ memory_cpu_integration:
     - Test integration by running the provided demo file:
       examples/mem_cpu_interop.py
 
+=======
+apu:
+  description: "Audio Processing Unit – stub (no sound logic)"
+  registers:
+    NR10: { addr: 0xFF10, bits: 8, role: "CH1 sweep" }
+    NR11: { addr: 0xFF11, bits: 8, role: "CH1 length/duty" }
+    NR12: { addr: 0xFF12, bits: 8, role: "CH1 envelope" }
+    NR13: { addr: 0xFF13, bits: 8, role: "CH1 frequency lo" }
+    NR14: { addr: 0xFF14, bits: 8, role: "CH1 frequency hi" }
+    NR52: { addr: 0xFF26, bits: 8, role: "Sound on/off" }
+    WAVE_RAM:
+      addr: 0xFF30
+      size: 16
+      bits: 8
+      role: "Waveform RAM (Channel 3)"

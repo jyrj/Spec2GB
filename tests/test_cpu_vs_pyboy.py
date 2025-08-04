@@ -139,5 +139,5 @@ def test_cpu_vs_pyboy():
     for ins in decode_rom(rom):
         cpu.step(ins)
 
-    ram_val = cpu.bus.read8(RAM_ADDR)
+    ram_val = mem.read8(RAM_ADDR)
     assert ram_val == ram_ref, f"RAM[{RAM_ADDR:04X}] mismatch (model={ram_val:#04x}, pyboy={ram_ref:#04x})"
