@@ -1,83 +1,156 @@
-# spec.yaml  – Starter v0.1
-
-name: GameBoy
-version: 0.1
+# spec.yaml – Game Boy subset spec (Acc‑only “tiny set”)
+# ===========================================================================
+name: GameBoy‑Subset
+version: 0.1.1
 
 cpu:
-  description: "8-bit Sharp LR35902 core (Intel 8080 + Z80 hybrid)"
+  description: "Sharp LR35902 core – accumulator‑only teaching subset"
+  # ------------------------------------------------------------------------
   registers:
-    A:   { bits: 8,  role: "Accumulator" }
-    F:   { bits: 8,  role: "Flag register (Z N H C)" }
-    PC:  { bits: 16, role: "Program Counter" }
+    # 8‑bit user‑visible registers
+    A: { bits: 8, role: "Accumulator" }
+    F: { bits: 8, role: "Flags (bit 7‑4 = Z N H C; bit 3‑0 unused)" }
+    B: { bits: 8, role: "Spare – constant 0 in this subset" }
+    C: { bits: 8, role: "Spare – constant 0 in this subset" }
+    D: { bits: 8, role: "Spare – constant 0 in this subset" }
+    E: { bits: 8, role: "Spare – constant 0 in this subset" }
+    H: { bits: 8, role: "Spare – constant 0 in this subset" }
+    L: { bits: 8, role: "Spare – constant 0 in this subset" }
+
+    # 16‑bit
+    SP: { bits: 16, role: "Stack Pointer (pre‑decrement stack)" }
+    PC: { bits: 16, role: "Program Counter (byte address)" }
+
+  # ------------------------------------------------------------------------
   alu_ops:
-    - { mnemonic: ADD_A_n8, operands: ["imm8"], effect: "A ← A + imm8" }
-    - { mnemonic: SUB_A_n8, operands: ["imm8"], effect: "A ← A – imm8" }
-    - { mnemonic: AND_A_n8, operands: ["imm8"], effect: "A ← A & imm8" }
-    - { mnemonic: OR_A_n8,  operands: ["imm8"], effect: "A ← A | imm8" }
-    - { mnemonic: XOR_A_n8, operands: ["imm8"], effect: "A ← A ^ imm8" }
-    - { mnemonic: INC_A,    operands: [],       effect: "A ← A + 1" }
-    - { mnemonic: DEC_A,    operands: [],       effect: "A ← A - 1" }
+    - mnemonic: ADD_A_n8        # 2 B
+      length: 2
+      operands: [imm8]
+      effect:  "A ← A + imm8      (8‑bit wrap‑around)"
+      flags:   "Z = (A==0); N = 0; H = carry bit 3→4; C = carry bit 7→8"
 
+    - mnemonic: SUB_A_n8        # 2 B
+      length: 2
+      operands: [imm8]
+      effect:  "A ← A – imm8      (8‑bit wrap‑around)"
+      flags:   "Z = (A==0); N = 1; H = borrow from bit 4; C = borrow from bit 8"
+
+    - mnemonic: AND_A_n8        # 2 B
+      length: 2
+      operands: [imm8]
+      effect:  "A ← A & imm8"
+      flags:   "Z = (A==0); N = 0; H = 1;               C = 0"
+
+    - mnemonic: OR_A_n8         # 2 B
+      length: 2
+      operands: [imm8]
+      effect:  "A ← A | imm8"
+      flags:   "Z = (A==0); N = 0; H = 0;               C = 0"
+
+    - mnemonic: XOR_A_n8        # 2 B
+      length: 2
+      operands: [imm8]
+      effect:  "A ← A ^ imm8"
+      flags:   "Z = (A==0); N = 0; H = 0;               C = 0"
+
+    - mnemonic: INC_A           # 1 B
+      length: 1
+      operands: []
+      effect:  "A ← A + 1"
+      flags:   "Z = (A==0); N = 0; H = carry bit 3→4;   C = – (unchanged)"
+
+    - mnemonic: DEC_A           # 1 B
+      length: 1
+      operands: []
+      effect:  "A ← A − 1"
+      flags:   "Z = (A==0); N = 1; H = borrow from bit 4; C = – (unchanged)"
+
+  # ------------------------------------------------------------------------
   load_store_ops:
-    - { mnemonic: LD_r_r,        operands: ["r1", "r2"], effect: "r1 ← r2" }
-    - { mnemonic: LD_A_n8_ptr,   operands: ["n8"],       effect: "A ← [n8]" }
-    - { mnemonic: LD_n8_A_ptr,   operands: ["n8"],       effect: "[n8] ← A" }
+    - mnemonic: LD_r_r          # 1 B
+      length: 1
+      operands: [r1, r2]
+      effect:  "r1 ← r2"
+      flags:   "– (unchanged)"
 
+    - mnemonic: LDH_A_a8        # 2 B  (a.k.a LDH A,[a8])
+      length: 2
+      operands: [a8]
+      effect:  "A ← [0xFF00 + a8]"
+      flags:   "–"
+
+    - mnemonic: LDH_a8_A        # 2 B  (a.k.a LDH [a8],A)
+      length: 2
+      operands: [a8]
+      effect:  "[0xFF00 + a8] ← A"
+      flags:   "–"
+
+  # ------------------------------------------------------------------------
   control_ops:
-    - { mnemonic: JP_a16,   operands: ["addr"],  effect: "PC ← addr" }
-    - { mnemonic: JR_r8,    operands: ["rel8"],  effect: "PC ← PC + rel8" }
-    - { mnemonic: CALL_a16, operands: ["addr"],  effect: "push(PC); PC ← addr" }
-    - { mnemonic: RET,      operands: [],        effect: "PC ← pop()" }
+    - mnemonic: JP_a16          # 3 B
+      length: 3
+      operands: [addr]
+      effect:  "PC ← addr"
+
+    - mnemonic: JR_r8           # 2 B
+      length: 2
+      operands: [rel8]
+      effect:  "PC ← PC + sign(rel8)"
+
+    - mnemonic: CALL_a16        # 3 B
+      length: 3
+      operands: [addr]
+      effect:  |
+        SP ← SP − 2
+        [SP] ← (PC + 3)   ; little‑endian push
+        PC ← addr
+
+    - mnemonic: RET             # 1 B
+      length: 1
+      operands: []
+      effect:  |
+        lo ← [SP]
+        hi ← [SP + 1]
+        SP ← SP + 2
+        PC ← hi:lo
 
 joypad:
-  description: "Joypad input register interface"
+  description: "Joypad interface (active‑low)"
   registers:
-    P1:
-      addr: 0xFF00
-      bits: 8
-      role: "Joypad input: button selection and state (active low)"
-<<<<<<< HEAD
+    JOYP: { addr: 0xFF00, bits: 8, role: "Joypad input and select" }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> c5fc739 (Joypad regs)
-=======
- 
->>>>>>> 91e8c0f (APU stub & polish)
 memory:
-  description: "Address map stub – grow section by section"
-  regions:       # ✨ Mentee B will flesh this out
-    - { name: ROM0,  base: 0x0000, size: 0x4000, readable: true, writable: false }
-    - { name: ROMX,  base: 0x4000, size: 0x4000, readable: true, writable: false }
-    - { name: VRAM,  base: 0x8000, size: 0x2000, readable: true, writable: true  }
-    - { name: WRAM0, base: 0xC000, size: 0x1000, readable: true, writable: true  }
-    - { name: WRAMX, base: 0xD000, size: 0x1000, readable: true, writable: true  }
-    - { name: OAM,   base: 0xFE00, size: 0x00A0, readable: true, writable: true  }
-    - { name: HRAM,  base: 0xFF80, size: 0x007F, readable: true, writable: true  }
+  description: "Complete 64 KiB DMG map (no banking, no boot ROM)"
+  regions:
+    - { name: ROM0,       base: 0x0000, size: 0x4000, readable: true,  writable: false }
+    - { name: ROMX,       base: 0x4000, size: 0x4000, readable: true,  writable: false }
+    - { name: VRAM,       base: 0x8000, size: 0x2000, readable: true,  writable: true  }
+    - { name: ERAM,       base: 0xA000, size: 0x2000, readable: true,  writable: true  }
+    - { name: WRAM0,      base: 0xC000, size: 0x1000, readable: true,  writable: true  }
+    - { name: WRAMX,      base: 0xD000, size: 0x1000, readable: true,  writable: true  }
+    - { name: ECHO,       base: 0xE000, size: 0x1E00, readable: true,  writable: true  }   # mirror of C000‑DDFF
+    - { name: OAM,        base: 0xFE00, size: 0x00A0, readable: true,  writable: true  }
+    - { name: NOT_USABLE, base: 0xFEA0, size: 0x0060, readable: false, writable: false }
+    - { name: IO_REG,     base: 0xFF00, size: 0x0080, readable: true,  writable: true  }
+    - { name: HRAM,       base: 0xFF80, size: 0x007F, readable: true,  writable: true  }
+    - { name: IE,         base: 0xFFFF, size: 0x0001, readable: true,  writable: true  }
 
+# PPU / APU sections kept for completeness – behaviour not defined here
 ppu:
-  description: "LCD controller registers only for now"
-  registers:     # ✨ Mentee C will expand here
-    LY:   { addr: 0xFF44, bits: 8, role: "Current scanline" }
+  registers:
     LCDC: { addr: 0xFF40, bits: 8, role: "LCD control" }
-    STAT: { addr: 0xFF41, bits: 8, role: "LCD status flags & mode" }
-    SCY:  { addr: 0xFF42, bits: 8, role: "BG viewport Y scroll" }
-    SCX:  { addr: 0xFF43, bits: 8, role: "BG viewport X scroll" }
-    WY:   { addr: 0xFF4A, bits: 8, role: "Window Y position" }
-    WX:   { addr: 0xFF4B, bits: 8, role: "Window X position plus 7" }
+    STAT: { addr: 0xFF41, bits: 8, role: "LCD status" }
+    SCY:  { addr: 0xFF42, bits: 8, role: "BG Y scroll" }
+    SCX:  { addr: 0xFF43, bits: 8, role: "BG X scroll" }
+    LY:   { addr: 0xFF44, bits: 8, role: "Current scanline" }
+    WY:   { addr: 0xFF4A, bits: 8, role: "Window Y" }
+    WX:   { addr: 0xFF4B, bits: 8, role: "Window X + 7" }
 
 apu:
-  description: "Audio Processing Unit – stub (no sound logic)"
   registers:
     NR10: { addr: 0xFF10, bits: 8, role: "CH1 sweep" }
     NR11: { addr: 0xFF11, bits: 8, role: "CH1 length/duty" }
     NR12: { addr: 0xFF12, bits: 8, role: "CH1 envelope" }
-    NR13: { addr: 0xFF13, bits: 8, role: "CH1 frequency lo" }
-    NR14: { addr: 0xFF14, bits: 8, role: "CH1 frequency hi" }
+    NR13: { addr: 0xFF13, bits: 8, role: "CH1 freq lo" }
+    NR14: { addr: 0xFF14, bits: 8, role: "CH1 freq hi" }
     NR52: { addr: 0xFF26, bits: 8, role: "Sound on/off" }
-    WAVE_RAM:
-      addr: 0xFF30
-      size: 16
-      bits: 8
-      role: "Waveform RAM (Channel 3)"
