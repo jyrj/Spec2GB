@@ -1,8 +1,3 @@
-Output a single Python file. Code only. No explanations. No ellipses. No truncation.
-Include TODO comments for unimplemented parts.
-Do not include markdown or comments about what the code does.
-All code must be importable and self-contained.
-
 You're helping with a Game Boy emulator. Please write simple Python 3.13.5 code.
 
 # Step 1: Plan
@@ -29,12 +24,14 @@ Use this table to define the regions:
 |--------|--------|--------|--------|
 | ROM0   | 0x0000 | 0x3FFF | False  |
 | ROMX   | 0x4000 | 0x7FFF | True   |
+| RAMX   | 0xA000 | 0xBFFF | True   |
 | VRAM   | 0x8000 | 0x9FFF | True   |
 | WRAM0  | 0xC000 | 0xCFFF | False  |
 | WRAMX  | 0xD000 | 0xDFFF | True   |
 | OAM    | 0xFE00 | 0xFE9F | False  |
+| TIMER  | 0xFF04 | 0xFF07 | True   |
+| IO     | 0xFF00 | 0xFF7F | True   |
 | HRAM   | 0xFF80 | 0xFFFE | False  |
-
 
 # Step 4: Cartridge ROM and RAM Mapping (MBC0)
 Update the `Memory` class so it accepts a `cartridge` object with:
@@ -45,11 +42,18 @@ Update the `Memory` class so it accepts a `cartridge` object with:
 The Memory class should:
 
 - Map `ROM0` (0x0000–0x3FFF) and `ROMX` (0x4000–0x7FFF) to `cartridge.rom`
-- Map `0xA000–0xBFFF` to `cartridge.ram` if present
+- Map `RAMX` (0xA000–0xBFFF) to `cartridge.ram` if present, or fallback to internal RAM
+- All other regions (e.g. WRAM, VRAM, HRAM, etc.) use internal bytearrays
+- The TIMER region should call `self.timer.read()` or `self.timer.write()` as appropriate
 
 Implement `read(addr)` and `write(addr, val)`:
 
 - ROM region reads return data from `cartridge.rom`
-- RAM region reads/writes access `cartridge.ram`
+- RAM region reads/writes access `cartridge.ram` or fallback
 - Writes to ROM should raise `ValueError`
 - Invalid or unmapped addresses should raise `ValueError`
+
+# Step 5: Add read8 alias
+Add `read8(addr)` method that returns `self.read(addr)`.
+
+This allows CPU bus calls like `bus.read8(pc)` to work without error.

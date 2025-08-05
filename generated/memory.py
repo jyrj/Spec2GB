@@ -2,13 +2,14 @@ from enum import Enum
 from .timer import Timer
 from .cartridge import Cartridge
 
+
 class MemoryRegion(Enum):
     ROM0 = (0x0000, 0x3FFF, False)
     ROMX = (0x4000, 0x7FFF, True)
+    RAMX = (0xA000, 0xBFFF, True)
     VRAM = (0x8000, 0x9FFF, True)
     WRAM0 = (0xC000, 0xCFFF, False)
     WRAMX = (0xD000, 0xDFFF, True)
-    RAMX = (0xA000, 0xBFFF, True)
     OAM = (0xFE00, 0xFE9F, False)
     TIMER = (0xFF04, 0xFF07, True)
     IO = (0xFF00, 0xFF7F, True)
@@ -17,11 +18,13 @@ class MemoryRegion(Enum):
     def contains(self, addr):
         return self.value[0] <= addr <= self.value[1]
 
+
 def get_memory_region(addr):
     for region in MemoryRegion:
         if region.contains(addr):
             return region.name
     return "UNKNOWN"
+
 
 class Memory:
     def __init__(self, cartridge: Cartridge):
@@ -82,9 +85,7 @@ class Memory:
         elif MemoryRegion.HRAM.contains(addr):
             self.hram[addr - 0xFF80] = val
         else:
-            print(f"Invalid write attempted at address {hex(addr)}")
             raise ValueError(f"Write to invalid memory address: {hex(addr)}")
 
     def read8(self, addr):
-        # Alias for read to satisfy cpu.bus.read8(addr) calls
         return self.read(addr)
